@@ -1,23 +1,23 @@
-import React from 'react';
+import Container from 'react-bootstrap/Container';
+import Nav from 'react-bootstrap/Nav';
+import Navbar from 'react-bootstrap/Navbar';
+import NavDropdown from 'react-bootstrap/NavDropdown';
 
-function Navbar({ setActiveComponent }) {
+function NavbarComponent() {
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light">
-      <div className="container">
-        <a className="navbar-brand" href="#">Chat App</a>
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ml-auto">
-            <li className="nav-item">
-              <button className="nav-link btn btn-link" onClick={() => setActiveComponent('SignIn')}>Sign In</button>
-            </li>
-            <li className="nav-item">
-              <button className="nav-link btn btn-link" onClick={() => setActiveComponent('SignUp')}>Sign Up</button>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+    <Navbar expand="lg" className="bg-body-tertiary">
+      <Container>
+        <Navbar.Brand href="#home">Chat App</Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="me-auto">
+            <Nav.Link href="/signin">Log in</Nav.Link>
+            <Nav.Link href="/signup">Sign up</Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
   );
 }
 
-export default Navbar;
+export default NavbarComponent;
