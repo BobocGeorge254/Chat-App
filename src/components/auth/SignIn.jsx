@@ -19,7 +19,7 @@ const SignIn = ({getStatus, getEmail}) => {
             .then((userCredentials) => {
                 console.log(userCredentials);
                 toast.success("Succesful! Happy chatting! :)");
-                navigation("/UserList", { state: { email } });
+                navigation("/UserList", { state: { userEmail : email } });
 
             })
             .catch((error) => {

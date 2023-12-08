@@ -9,7 +9,7 @@ const UserList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const navigation = useNavigate();
     const location = useLocation();
-    const userEmail = location.state?.email ;
+    const userEmail = location.state?.userEmail ;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -39,11 +39,26 @@ const UserList = () => {
 
     return (
         <div>
-            <h1 style={{ textAlign: "center" }}>{userEmail}</h1>
+            <h1 style={{ textAlign: "center" }}> Hi, {userEmail}</h1>
+            
             <div className="container mt-5">
+                <div className="container mt-3" style={{display: 'flex', justifyContent: 'center', width: '20vw'}}>
+                <input
+                    type="text"
+                    placeholder="Search by username or email"
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    style={{
+                        width: '100%',
+                        padding: '8px',
+                        margin: '10px 0',
+                        borderRadius: '4px',
+                        border: '1px solid #ccc',
+                    }}
+                />
+            </div>
                 <div className="row justify-content-center">
                     <div className="col-md-6">
-                        {/* ... (input and filtering code remains unchanged) */}
                         {filteredUsers.map((user) => (
                             <div key={user.id} className="card mb-3">
                                 <div className="card-body d-flex justify-content-between align-items-center">
@@ -51,7 +66,7 @@ const UserList = () => {
                                     <p className="card-text">{user.email}</p>
                                     <button
                                         className="btn btn-primary"
-                                        onClick={() => navigation(`/chat/${user.id}`)}
+                                        onClick={() => navigation(`/chat/${user.id}`, { state: { receiverEmail: user.email, email: userEmail } })}
                                     >
                                         Chat
                                     </button>
