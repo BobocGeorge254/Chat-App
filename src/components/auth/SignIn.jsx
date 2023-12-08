@@ -5,6 +5,8 @@ import {  toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Navbar from "../navigation/Navbar";
 import { useNavigate, useLocation } from "react-router-dom";
+import {db} from "../../firebase";
+import { collection, getDocs, addDoc, query, where, } from "firebase/firestore";
 
 
 const SignIn = ({getStatus, getEmail}) => {
@@ -13,21 +15,28 @@ const SignIn = ({getStatus, getEmail}) => {
     const navigation = useNavigate();
     const location = useLocation();
     
-    const signIn = (e) => {
-        e.preventDefault();
-        signInWithEmailAndPassword(auth, email, password)
-            .then((userCredentials) => {
-                console.log(userCredentials);
-                toast.success("Succesful! Happy chatting! :)");
-                navigation("/UserList", { state: { userEmail : email } });
+    const signIn = async (e) => {
+    e.preventDefault();
+        try {
+            const userCredentials = await signInWithEmailAndPassword(auth, email, password);
+            
+            const usersRef = collection(db, 'users');
+            const userQuery = query(usersRef, where('email', '==', email));
+            const querySnapshot = await getDocs(userQuery);
 
-            })
-            .catch((error) => {
-                console.log(error);
-                toast.error("Something went wrong!");
-            })
+            let userId = '';
+            querySnapshot.forEach((doc) => {
+                userId = doc.id; 
+            });
+            navigation(`/userlist/${userId}`, { state: { userEmail: email } });
+            toast.success("Successful! Happy chatting! :)");
+        } 
+        catch (error) {
+            console.log(error);
+            toast.error("Something went wrong!");
+        }
+    };
 
-    }
     return (
         <div>
             <Navbar />

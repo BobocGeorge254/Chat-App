@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import {db} from "../../firebase";
 import { collection, getDoc, addDoc } from "firebase/firestore";
 import Navbar from "../navigation/Navbar";
+import { useNavigate } from "react-router-dom";
 
 const SignUp = () => {
 
@@ -28,16 +29,18 @@ const SignUp = () => {
 
     }
 
+    const navigation = useNavigate();
+
     const signUp = (e) => {
         e.preventDefault();
         createUserWithEmailAndPassword(auth, email, password)
             .then((userCredentials) => {
-                console.log(userCredentials);
                 toast.success("Sign up successful!");
                 writeToDatabase(email, username, birthday);
+                navigation("/signin");
+
             })
             .catch((error) => {
-                console.log(error);
                 toast.error("Something went wrong!");
             })
 

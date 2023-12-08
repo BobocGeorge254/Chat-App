@@ -1,37 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { collection, addDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { useLocation, useParams } from 'react-router-dom';
+import { collection, addDoc, getDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import Button from 'react-bootstrap/Button';
+import StackNavigator from '../components/navigation/StackNavigator';
+import UserList from './UserList';
 
 const Chat = () => {
+  const [userEmail, setUserEmail] = useState('');
+  const [receiverEmail, setReceiverEmail] = useState(''); 
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const location = useLocation();
-  const receiverEmail = location.state?.receiverEmail;
-  const userEmail = location.state?.email;
+
+  const params = useParams();
+  const userId = params.userId;
+  const receiverId = params.recipientId;
 
   const messageCollection = collection(db, 'messages');
+  const userCollection = collection(db, 'users');
 
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const combinedQuery = query(
-          messageCollection,
-          orderBy('timestamp') // Sort messages by timestamp
-        );
+        const userIdDoc = await getDoc(doc(userCollection, userId));
+        const receiverIdDoc = await getDoc(doc(userCollection, receiverId));
 
-        const querySnapshot = await getDocs(combinedQuery);
+        setUserEmail(userIdDoc.data().email);
+        setReceiverEmail(receiverIdDoc.data().email);
+
+        const querySnapshot = await getDocs(messageCollection);
         const allMessages = querySnapshot.docs.map(doc => doc.data());
+        
+        const filteredMessages = allMessages.filter(msg => (
+          (msg.sender === userEmail && msg.receiver === receiverEmail) ||
+          (msg.sender === receiverEmail && msg.receiver === userEmail)
+        ));
+        
+        const orderedMessages = filteredMessages.sort((a, b) => {
+          return new Date(a.timestamp) - new Date(b.timestamp);
+        });
 
-        setMessages(allMessages);
+        setMessages(orderedMessages);
       } catch (error) {
         console.error('Error fetching messages:', error);
       }
     };
 
     fetchMessages();
-  }, [messageCollection]);
+  }, [messageCollection, userId, receiverId, userCollection, userEmail, receiverEmail]);
 
   const sendMessage = async e => {
     e.preventDefault();
@@ -51,21 +68,39 @@ const Chat = () => {
   };
 
   return (
-    <div>
-      <h1 style={{textAlign: 'center'}}>Chat with {receiverEmail}</h1>
-      <div style={{ height: '70vh', overflowY: 'auto', border: '1px solid #ccc', padding: '10px' }}>
+    <div style={{ fontFamily: 'Arial, sans-serif', textAlign: 'center' }}>
+      <StackNavigator />
+      <h1 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '20px' }}>
+        Chat with {receiverEmail}
+      </h1>
+      <div
+        style={{
+          height: '70vh',
+          overflowY: 'auto',
+          border: '1px solid #ccc',
+          padding: '10px',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '10px',
+          marginLeft: '5vw',
+          marginRight: '5vw',
+        }}
+      >
         {messages.map((msg, index) => (
-          <div key={index} style={{ textAlign: msg.sender === userEmail ? 'right' : 'left' }}>
+          <div
+            key={index}
+            style={{
+              textAlign: msg.sender === userEmail ? 'right' : 'left',
+            }}
+          >
             <p
               style={{
                 display: 'inline-block',
-                padding: '5px 10px',
+                padding: '10px',
                 borderRadius: '10px',
                 backgroundColor: msg.sender === userEmail ? '#DCF8C6' : '#ACDFFB',
-                margin: '5px 0',
-                maxWidth: '40vw', // Limit width to 50% of viewport width
+                maxWidth: '60%',
                 wordWrap: 'break-word',
-                textAlign: 'left'
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
               }}
             >
               {msg.content}
@@ -73,15 +108,23 @@ const Chat = () => {
           </div>
         ))}
       </div>
-      <form onSubmit={sendMessage} style={{display: 'flex', justifyContent: "center"}}>
+      <form onSubmit={sendMessage} style={{ marginTop: '20px' }}>
         <input
           type="text"
           value={message}
           onChange={e => setMessage(e.target.value)}
           placeholder="Type a message..."
-          style={{ marginTop: '10px', width: '80%', padding: '5px' }}
+          style={{
+            padding: '8px',
+            width: '60%',
+            borderRadius: '5px',
+            border: '1px solid #ccc',
+            marginRight: '10px',
+          }}
         />
-        <Button variant="primary" type='submit' style={{marginTop: '10px'}}>Send</Button>{' '}
+        <Button variant="primary" type='submit'>
+          Send
+        </Button>{' '}
       </form>
     </div>
   );

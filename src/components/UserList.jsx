@@ -2,14 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import StackNavigator from './navigation/StackNavigator';
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [userEmail, setUserEmail] = useState('');
     const navigation = useNavigate();
     const location = useLocation();
-    const userEmail = location.state?.userEmail ;
+    const params = useParams();
+    const id = params.userId;
+    
 
     useEffect(() => {
         const fetchData = async () => {
@@ -18,6 +22,11 @@ const UserList = () => {
                 const data = await getDocs(userCollection);
                 const userList = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
                 setUsers(userList);
+                console.log("Id-ul este", id);
+                const user = data.docs.find(doc => doc.id === id);
+                if (user) {
+                    setUserEmail(user.data().email); 
+                }
             } catch (error) {
                 console.error('Error fetching users:', error);
             }
@@ -39,6 +48,7 @@ const UserList = () => {
 
     return (
         <div>
+            <StackNavigator />
             <h1 style={{ textAlign: "center" }}> Hi, {userEmail}</h1>
             
             <div className="container mt-5">
@@ -66,7 +76,7 @@ const UserList = () => {
                                     <p className="card-text">{user.email}</p>
                                     <button
                                         className="btn btn-primary"
-                                        onClick={() => navigation(`/chat/${user.id}`, { state: { receiverEmail: user.email, email: userEmail } })}
+                                        onClick={() => navigation(`/chat/${id}/${user.id}`, { state: { receiverEmail: user.email, email: userEmail } })}
                                     >
                                         Chat
                                     </button>
