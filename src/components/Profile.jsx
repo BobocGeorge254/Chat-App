@@ -21,7 +21,7 @@ const Profile = () => {
   const imagesListRef = ref(storage, `images/${userId}`);
   const profilePicRef = ref(storage, `images/${userId}/profilepic`);
 
-   const handleProfilePictureUpload = (event) => {
+  const handleProfilePictureUpload = (event) => {
     const file = event.target.files[0];
     const reader = new FileReader();
 
@@ -81,39 +81,42 @@ const Profile = () => {
   fetchImages();
 }, []);
 
-  return (
+   return (
     <div>
       <StackNavigator />
       <Container className="mt-4">
         <Row>
           <Col md={4}>
-            <div className="mb-3">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleProfilePictureUpload}
-                className="form-control"
-              />
-               {profilePicture && (
-                 <img
-                  src={profilePicture}
-                  alt="Profile"
-                  className="img-fluid mt-3 rounded-circle"
-                  style={{ width: '80px', height: '80px', display: 'flex', margin: 'auto'}}
+            <div className="mb-3 text-center">
+              <h3>Profile Picture</h3>
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureUpload}
+                  className="form-control"
                 />
-              )}
+                {profilePicture && (
+                  <img
+                    src={profilePicture}
+                    alt="Profile"
+                    className="img-fluid mt-3 rounded-circle"
+                    style={{ width: '200px', height: '200px' }}
+                  />
+                )}
+              </div>
 
-              <Form onSubmit={handleDescriptionSubmit}>
+              <Form className="mt-4 text-center" onSubmit={handleDescriptionSubmit}>
                 <Form.Group controlId="description">
-                  <Form.Label>Description</Form.Label>
+                  <h3>Description</h3>
                   <Form.Control
                     as="textarea"
                     rows={3}
                     value={description}
-                    onChange={e => setDescription(e.target.value)}
+                    onChange={(e) => setDescription(e.target.value)}
                   />
                 </Form.Group>
-                <Button variant="primary" type="submit">
+                <Button variant="primary" type="submit" style={{marginTop: '10px'}}>
                   Update Description
                 </Button>
               </Form>
@@ -121,28 +124,30 @@ const Profile = () => {
           </Col>
 
           <Col md={8}>
-            <Row>
-              {imageList.length === 0 ? (
-                <Col className="text-center">No posts yet</Col>
-              ) : (
-                imageList.map((url) => (
-                    <img src={url}  className="img-fluid"
-                    style={{ width: '20vw', height: '30vh' }} />
-                ))
-              )}
-              <Col sm={4} className="mb-3">
-                <div className="mt-3">
-                  <input
-                    type="file"
-                    onChange={(event) =>  {setImageUpload(event.target.files[0])} }
-                    className="form-control"
-                  />
-                </div>
-                <button onClick={handlePhotoUpload}>
-                  Upload
-                </button>
-              </Col>
-            </Row>
+            <div className="mb-4">
+              <h3 className="text-center">Photos</h3>
+              <Row>
+                {imageList.length === 0 ? (
+                  <Col className="text-center">No posts yet</Col>
+                ) : (
+                  imageList.map((url) => (
+                    <Col key={url} xs={6} sm={4} md={3} className="mb-3">
+                      <img src={url} className="img-fluid" alt="Post" />
+                    </Col>
+                  ))
+                )}
+              </Row>
+              <div className="mt-3 text-center">
+                <input
+                  type="file"
+                  onChange={(event) => setImageUpload(event.target.files[0])}
+                  className="form-control"
+                />
+                <Button className="mt-2" onClick={handlePhotoUpload}>
+                  Upload Photo
+                </Button>
+              </div>
+            </div>
           </Col>
         </Row>
       </Container>
