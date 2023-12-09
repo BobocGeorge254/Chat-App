@@ -80,6 +80,12 @@ const UserList = () => {
                                     >
                                         Chat
                                     </button>
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={() => navigation(`/profile/${user.id}`, { state: { receiverEmail: user.email, email: userEmail } })}
+                                    >
+                                        Profile
+                                    </button>
                                 </div>
                             </div>
                         ))}

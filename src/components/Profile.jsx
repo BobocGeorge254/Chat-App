@@ -1,51 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap';
 import StackNavigator from './navigation/StackNavigator';
+import { ref, uploadBytes, listAll, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebase';
+import {v4} from 'uuid';
+import { useParams } from 'react-router-dom';
+import {db} from '../firebase';
+import { collection, getDoc, addDoc, doc, updateDoc } from "firebase/firestore";
 
 const Profile = () => {
  
-  const [profilePicture, setProfilePicture] = useState(''); // Store image URL or file object
+  const [profilePicture, setProfilePicture] = useState(''); 
   const [description, setDescription] = useState('');
-  const [uploadedPhotos, setUploadedPhotos] = useState([]);
+  const [imageUpload, setImageUpload] = useState(null);
+  const [imageList, setImageList] = useState([]);
+  const [user, setUser] = useState(null);
+  
+  const params = useParams();
+  const userId = params.userId;
+  const imagesListRef = ref(storage, `images/${userId}`);
+  const profilePicRef = ref(storage, `images/${userId}/profilepic`);
 
-  // Function to handle profile picture upload
-  const handleProfilePictureUpload = event => {
-   
+   const handleProfilePictureUpload = (event) => {
     const file = event.target.files[0];
     const reader = new FileReader();
-    reader.onload = () => {
-      setProfilePicture(reader.result);
+
+    reader.onload = async () => {
+      const storageRef = ref(storage, `images/${userId}/profilepic/${file.name}`);
+      try {
+        await uploadBytes(storageRef, file);
+        console.log('Profile picture uploaded successfully!');
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+      }
     };
-    reader.readAsDataURL(file);
+
+    if (file) {
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handlePhotoUpload = event => {
-    const files = Array.from(event.target.files);
-    Promise.all(
-      files.map(file => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            resolve(reader.result);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
+  const handlePhotoUpload = () => {
+     if(imageUpload == null)  return;
+     const imageRef = ref(storage, `images/${userId}/${imageUpload.name + v4()}`);
+     uploadBytes(imageRef, imageUpload).then((snapshot) => {
+        getDownloadURL(snapshot.ref).then((url) => {
+            setImageList((prev) => [...prev, url]);
         });
-      })
-    )
-      .then(images => {
-        setUploadedPhotos([...uploadedPhotos, ...images]);
-      })
-      .catch(error => {
-        console.error('Error uploading photos:', error);
-      });
+     });
   };
 
-  // Function to handle form submission for description update
-  const handleDescriptionSubmit = event => {
+  const handleDescriptionSubmit = async (event) => {
     event.preventDefault();
-    console.log('Updated description:', description);
+    await updateDoc(doc(db, "users", userId), {
+      description: description
+    });
   };
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        const profilePicList = await listAll(profilePicRef);
+        const profilePicURLs = await Promise.all(profilePicList.items.map((itemRef) => getDownloadURL(itemRef)));
+
+        const userRef = doc(db, 'users', userId); 
+        const userSnapshot = await getDoc(userRef);
+        setUser(userSnapshot.data());
+        setDescription(userSnapshot.data().description);
+        const res = await listAll(imagesListRef);
+        const urls = await Promise.all(res.items.map((itemRef) => getDownloadURL(itemRef)));
+        setImageList(urls);
+        if (profilePicURLs.length > 0) {
+        setProfilePicture(profilePicURLs[0]); // Assuming only one profile picture is uploaded
+      }
+      } catch (error) {
+        console.error('Error fetching images:', error);
+      }
+  };
+
+  fetchImages();
+}, []);
 
   return (
     <div>
@@ -60,7 +94,7 @@ const Profile = () => {
                 onChange={handleProfilePictureUpload}
                 className="form-control"
               />
-              {profilePicture && (
+               {profilePicture && (
                  <img
                   src={profilePicture}
                   alt="Profile"
@@ -86,29 +120,27 @@ const Profile = () => {
             </div>
           </Col>
 
-          {/* Grid layout for photos */}
           <Col md={8}>
             <Row>
-              {uploadedPhotos.length === 0 ? (
+              {imageList.length === 0 ? (
                 <Col className="text-center">No posts yet</Col>
               ) : (
-                uploadedPhotos.map((photo, index) => (
-                  <Col key={index} sm={4} className="mb-3">
-                    <img src={photo} alt={`Uploaded Photo ${index + 1}`} className="img-fluid"
+                imageList.map((url) => (
+                    <img src={url}  className="img-fluid"
                     style={{ width: '20vw', height: '30vh' }} />
-                  </Col>
                 ))
               )}
               <Col sm={4} className="mb-3">
                 <div className="mt-3">
                   <input
                     type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handlePhotoUpload}
+                    onChange={(event) =>  {setImageUpload(event.target.files[0])} }
                     className="form-control"
                   />
                 </div>
+                <button onClick={handlePhotoUpload}>
+                  Upload
+                </button>
               </Col>
             </Row>
           </Col>
