@@ -55,7 +55,7 @@ const Profile = () => {
     await updateDoc(doc(db, "users", userId), {
       description: description
     });
-  };
+  }; 
 
   useEffect(() => {
     const fetchImages = async () => {

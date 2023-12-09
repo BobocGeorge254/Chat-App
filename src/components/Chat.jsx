@@ -7,8 +7,8 @@ import StackNavigator from '../components/navigation/StackNavigator';
 import UserList from './UserList';
 
 const Chat = () => {
-  const [userEmail, setUserEmail] = useState('');
-  const [receiverEmail, setReceiverEmail] = useState(''); 
+  const [gUserEmail, setUserEmail] = useState('');
+  const [gReceiverEmail, setReceiverEmail] = useState(''); 
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const location = useLocation();
@@ -20,15 +20,22 @@ const Chat = () => {
   const messageCollection = collection(db, 'messages');
   const userCollection = collection(db, 'users');
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const userIdDoc = await getDoc(doc(userCollection, userId));
-        const receiverIdDoc = await getDoc(doc(userCollection, receiverId));
 
-        setUserEmail(userIdDoc.data().email);
-        setReceiverEmail(receiverIdDoc.data().email);
+  const getSenderAndReceiverEmails = async () => {
+    const userIdDoc = await getDoc(doc(userCollection, userId));
+    const receiverIdDoc = await getDoc(doc(userCollection, receiverId));
+    const userEmail = userIdDoc.data().email
+    const receiverEmail = receiverIdDoc.data().email
+    return [userEmail, receiverEmail];
+  }
 
+  const fetchMessages = async () => {
+    try {
+      
+      const [userEmail, receiverEmail] = await getSenderAndReceiverEmails();
+      console.log("testing muie:  ", messages.length, userEmail, receiverEmail);
+      setUserEmail(userEmail);
+      setReceiverEmail(receiverEmail);
         const querySnapshot = await getDocs(messageCollection);
         const allMessages = querySnapshot.docs.map(doc => doc.data());
         
@@ -41,17 +48,30 @@ const Chat = () => {
           return new Date(a.timestamp) - new Date(b.timestamp);
         });
 
-        setMessages(orderedMessages);
+        if (orderedMessages.length > 0)
+          setMessages(orderedMessages);
       } catch (error) {
         console.error('Error fetching messages:', error);
       }
     };
+  
 
+  useEffect(() => {
+    getSenderAndReceiverEmails().then((u, r) => {
+      setUserEmail(u);
+      setReceiverEmail(r);
+    });
+    
+    const interval = setInterval(fetchMessages, 1000);
     fetchMessages();
-  }, [messageCollection, userId, receiverId, userCollection, userEmail, receiverEmail]);
+    return () => clearInterval(interval);
+  }, []);
 
   const sendMessage = async e => {
     e.preventDefault();
+    const [userEmail, receiverEmail] = await getSenderAndReceiverEmails();
+          setUserEmail(userEmail);
+      setReceiverEmail(receiverEmail);
     if (message.trim() !== '') {
       try {
         await addDoc(messageCollection, {
@@ -61,6 +81,7 @@ const Chat = () => {
           timestamp: new Date().toISOString(),
         });
         setMessage('');
+        fetchMessages();
       } catch (error) {
         console.error('Error sending message:', error);
       }
@@ -71,7 +92,7 @@ const Chat = () => {
     <div style={{ fontFamily: 'Arial, sans-serif', textAlign: 'center' }}>
       <StackNavigator />
       <h1 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '20px' }}>
-        Chat with {receiverEmail}
+        Chat with {gReceiverEmail}
       </h1>
       <div
         style={{
@@ -89,7 +110,7 @@ const Chat = () => {
           <div
             key={index}
             style={{
-              textAlign: msg.sender === userEmail ? 'right' : 'left',
+              textAlign: msg.sender === gUserEmail ? 'right' : 'left',
             }}
           >
             <p
@@ -97,7 +118,7 @@ const Chat = () => {
                 display: 'inline-block',
                 padding: '10px',
                 borderRadius: '10px',
-                backgroundColor: msg.sender === userEmail ? '#DCF8C6' : '#ACDFFB',
+                backgroundColor: msg.sender === gUserEmail ? '#DCF8C6' : '#ACDFFB',
                 maxWidth: '60%',
                 wordWrap: 'break-word',
                 boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
