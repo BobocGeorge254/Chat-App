@@ -1,11 +1,12 @@
-
-
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import StackNavigator from './navigation/StackNavigator';
+import { ref, uploadBytes, listAll, getDownloadURL } from 'firebase/storage';
+import {storage} from '../firebase';
+import logo from '../assets/profilePicture.jpg';
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
@@ -22,6 +23,23 @@ const UserList = () => {
                 const userCollection = collection(db, 'users');
                 const data = await getDocs(userCollection);
                 const userList = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+
+                 await Promise.all(userList.map(async (user) => {
+                    const profilePicRef = ref(storage, `images/${user.id}/profilepic`);
+                    try {
+                        const picList = await listAll(profilePicRef);
+                        if (picList.items.length > 0) {
+                            const profilePicURL = await getDownloadURL(picList.items[0]);
+                            user.profilePicture = profilePicURL;
+                        }
+                        else {
+                            user.profilePicture = logo;
+                        }
+                    } catch (error) {
+                        console.error('Error fetching profile picture:', error);
+                    }
+                }));
+
                 setUsers(userList);
                 console.log("Id-ul este", id);
                 const user = data.docs.find((doc) => doc.id === id);
@@ -87,7 +105,7 @@ const UserList = () => {
                                 </button>
                                 <button
                                     className="btn btn-primary"
-                                    onClick={() => navigation(`/profile/${user.id}`, { state: { receiverEmail: user.email, email: userEmail } })}
+                                    onClick={() => navigation(`/profile/${id}/${user.id}`, { state: { receiverEmail: user.email, email: userEmail } })}
                                     style={{ backgroundColor: '#3897f0', color: '#fff', border: 'none', borderRadius: '4px', padding: '8px 16px' }}
                                 >
                                     Profile

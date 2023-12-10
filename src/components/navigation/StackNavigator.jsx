@@ -22,7 +22,7 @@ function OffcanvasExample() {
           </Offcanvas.Header>
           <Offcanvas.Body>
            <Nav className="justify-content-end flex-grow-1 pe-3">
-                <Nav.Link as={Link} to={`/profile/${userId}`}>Profile</Nav.Link>
+                <Nav.Link as={Link} to={`/profile/${userId}/${userId}`}>Profile</Nav.Link>
                 <Nav.Link as={Link} to={`/userlist/${userId}`}>Search people</Nav.Link>
                 <Nav.Link as={Link} to="/signin">Log Out</Nav.Link>
             </Nav>
