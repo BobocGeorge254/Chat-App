@@ -7,6 +7,8 @@ import {v4} from 'uuid';
 import { useParams } from 'react-router-dom';
 import {db} from '../firebase';
 import { collection, getDoc, addDoc, doc, updateDoc } from "firebase/firestore";
+import logo from '../assets/profilePicture.jpg';
+
 
 const Profile = () => {
  
@@ -71,8 +73,11 @@ const Profile = () => {
         const urls = await Promise.all(res.items.map((itemRef) => getDownloadURL(itemRef)));
         setImageList(urls);
         if (profilePicURLs.length > 0) {
-        setProfilePicture(profilePicURLs[0]); // Assuming only one profile picture is uploaded
-      }
+          setProfilePicture(profilePicURLs[0]); // Assuming only one profile picture is uploaded
+        }
+        else {
+          setProfilePicture(logo);
+        }
       } catch (error) {
         console.error('Error fetching images:', error);
       }
@@ -82,77 +87,83 @@ const Profile = () => {
 }, []);
 
    return (
-    <div>
-      <StackNavigator />
-      <Container className="mt-4">
-        <Row>
-          <Col md={4}>
-            <div className="mb-3 text-center">
-              <h3>Profile Picture</h3>
-              <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfilePictureUpload}
-                  className="form-control"
+    <div className="container mt-4 mb-4 p-3 d-flex justify-content-center" style={{maxWidth: "40vw"}}>
+      <div className="card p-4">
+        <div className="profile-section">
+          <div className="image d-flex flex-column justify-content-center align-items-center">
+            <h3>Profile Picture</h3>
+            <div className="image d-flex flex-column justify-content-center align-items-center">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfilePictureUpload}
+                className="form-control"
+              />
+              {profilePicture && (
+                <img
+                  src={profilePicture}
+                  className="img-fluid mt-3 rounded-circle"
+                  style={{ width: '100px', height: '100px' }}
+                  alt="Profile"
                 />
-                {profilePicture && (
-                  <img
-                    src={profilePicture}
-                    alt="Profile"
-                    className="img-fluid mt-3 rounded-circle"
-                    style={{ width: '200px', height: '200px' }}
-                  />
-                )}
-              </div>
-
-              <Form className="mt-4 text-center" onSubmit={handleDescriptionSubmit}>
-                <Form.Group controlId="description">
-                  <h3>Description</h3>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </Form.Group>
-                <Button variant="primary" type="submit" style={{marginTop: '10px'}}>
-                  Update Description
-                </Button>
-              </Form>
+              )}
             </div>
-          </Col>
+            {/*<h4>{user.username}</h4> <p>{user.email}</p>*/}
+            
+            {/* Other profile information */}
+          </div>
+        </div>
 
-          <Col md={8}>
-            <div className="mb-4">
-              <h3 className="text-center">Photos</h3>
-              <Row>
-                {imageList.length === 0 ? (
-                  <Col className="text-center">No posts yet</Col>
-                ) : (
-                  imageList.map((url) => (
-                    <Col key={url} xs={6} sm={4} md={3} className="mb-3">
-                      <img src={url} className="img-fluid" alt="Post" />
-                    </Col>
-                  ))
-                )}
-              </Row>
-              <div className="mt-3 text-center">
-                <input
-                  type="file"
-                  onChange={(event) => setImageUpload(event.target.files[0])}
-                  className="form-control"
-                />
-                <Button className="mt-2" onClick={handlePhotoUpload}>
-                  Upload Photo
-                </Button>
-              </div>
-            </div>
-          </Col>
-        </Row>
-      </Container>
+        <div className="profile-section text-center">
+          <h3 className="text-center">Description</h3>
+          <Form onSubmit={handleDescriptionSubmit}>
+            <Form.Group controlId="description">
+              <Form.Control
+                as="textarea"
+                rows={5}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                style={{ textAlign: 'center' }}
+              />
+            </Form.Group>
+            <Button variant="primary" type="submit" style={{ marginTop: '10px' }}>
+              Update Description
+            </Button>
+          </Form>
+        </div>
+
+        <hr className="new1" />
+
+        <div className="photos-section mt-4">
+          <h3 className="text-center">Photos</h3>
+          <div className="d-flex flex-wrap justify-content-center">
+            {imageList.length === 0 ? (
+              <p className="text-center">No posts yet</p>
+            ) : (
+              imageList.map((url) => (
+                <div key={url} className="m-2" style={{ maxWidth: '200px', maxHeight: '200px', overflow: 'hidden' }}>
+                  <img src={url} className="img-fluid" alt="Post" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ))
+            )}
+          </div>
+          <div className="mt-3 text-center">
+            <input
+              type="file"
+              onChange={(event) => setImageUpload(event.target.files[0])}
+              className="form-control"
+            />
+            <Button className="mt-2" onClick={handlePhotoUpload} variant="primary">
+              Upload Photo
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
+
+
+
 
 export default Profile;
