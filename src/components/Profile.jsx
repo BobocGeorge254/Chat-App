@@ -9,12 +9,12 @@ import {
   deleteObject,
   getStorage,
 } from "firebase/storage";
-import { storage } from "../firebase";
 import { v4 } from "uuid";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { db } from "../firebase";
 import { getDoc, doc, updateDoc } from "firebase/firestore";
 import logo from "../assets/profilePicture.jpg";
+import { auth } from "../firebase";
 
 const Profile = () => {
   const [profilePicture, setProfilePicture] = useState("");
@@ -24,11 +24,15 @@ const Profile = () => {
   const [imageList, setImageList] = useState([]);
   const [imageListRef, setImageListRef] = useState([]);
   const [username, setUsername] = useState("");
+  const [currentUserEmail, setCurrentUserEmail] = useState("");
 
   const params = useParams();
   const [profileId, setProfileId] = useState(params.profileId);
   const [userId, setUserId] = useState(params.userId);
   const storage = getStorage();
+
+  const location = useLocation();
+  const { receiverEmail } = location.state || {};
   const navigation = useNavigate();
 
   const handleProfilePictureUpload = (event) => {
@@ -59,7 +63,6 @@ const Profile = () => {
     const uniqueIdentifier = imageUpload.name + v4();
     const imageRef = ref(storage, `images/${profileId}/${uniqueIdentifier}`);
     setImageListRef((prevRefs) => [...prevRefs, uniqueIdentifier]);
-    //console.log(imageListRef);
     uploadBytes(imageRef, imageUpload).then((snapshot) => {
       getDownloadURL(snapshot.ref).then((url) => {
         setImageList((prev) => [...prev, url]);
@@ -91,11 +94,11 @@ const Profile = () => {
   };
 
   const extractPathFromUrl = (url) => {
-    const startText = "%2F"; // The start of the path in your URL
-    const endText = "?alt=media"; // The end of the path in your URL
+    const startText = "%2F"; 
+    const endText = "?alt=media"; 
 
     const firstIndex = url.indexOf(startText);
-    const secondIndex = url.indexOf(startText, firstIndex + 1); // Find the second occurrence
+    const secondIndex = url.indexOf(startText, firstIndex + 1); 
 
     const endIndex = url.indexOf(endText);
 
@@ -114,7 +117,7 @@ const Profile = () => {
 
   const redirectToPost = ({ url }) => {
     navigation(
-      `/post/${params.idToken}/${params.userId}/${
+      `/post/${
         params.profileId
       }/${extractPathFromUrl(url)}`,
       { state: { url: url } }
@@ -122,6 +125,8 @@ const Profile = () => {
   };
 
   useEffect(() => {
+    console.log(receiverEmail);
+    setCurrentUserEmail(auth.currentUser.email);
     const fetchImages = async () => {
       try {
         const imagesListRef = ref(storage, `images/${params.profileId}`);
@@ -151,7 +156,7 @@ const Profile = () => {
         );
         setImageList(urls);
         if (profilePicURLs.length > 0) {
-          setProfilePicture(profilePicURLs[0]); // Assuming only one profile picture is uploaded
+          setProfilePicture(profilePicURLs[0]); 
         } else {
           setProfilePicture(logo);
         }
@@ -173,7 +178,7 @@ const Profile = () => {
         <div className="card p-4">
           <div className="profile-section">
             <div className="image d-flex flex-column justify-content-center align-items-center">
-              {userId === profileId ? (
+              {currentUserEmail === receiverEmail ? (
                 <div className="image d-flex flex-column justify-content-center align-items-center">
                   <input
                     type="file"
@@ -218,7 +223,7 @@ const Profile = () => {
                   style={{ textAlign: "center" }}
                 />
               </Form.Group>
-              {userId === profileId && (
+              {currentUserEmail === receiverEmail && (
                 <div>
                   <Button
                     variant="primary"
@@ -261,7 +266,7 @@ const Profile = () => {
                         objectFit: "cover",
                       }}
                     />
-                    {userId === profileId && (
+                    {currentUserEmail === receiverEmail && (
                       <button
                         className="btn btn-danger btn-sm delete-button"
                         onClick={() => handleDeletePhoto(index)}
@@ -278,7 +283,7 @@ const Profile = () => {
                 ))
               )}
             </div>
-            {userId === profileId && (
+            {currentUserEmail === receiverEmail && (
               <div className="mt-3 text-center">
                 <input
                   type="file"

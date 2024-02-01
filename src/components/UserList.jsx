@@ -6,20 +6,18 @@ import StackNavigator from "./navigation/StackNavigator";
 import { ref, listAll, getDownloadURL } from "firebase/storage";
 import { storage } from "../firebase";
 import logo from "../assets/profilePicture.jpg";
+import { auth } from "../firebase"; 
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [userToken, setUserToken] = useState("");
   const navigation = useNavigate();
-  const params = useParams();
-  const id = params.userId;
+  const { userId } = useParams();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        //console.log(id);
         const userCollection = collection(db, "users");
         const data = await getDocs(userCollection);
         const userList = data.docs.map((doc) => ({
@@ -45,11 +43,9 @@ const UserList = () => {
         );
 
         setUsers(userList);
-        //console.log("Id-ul este", id, userList);
-        const user = data.docs.find((doc) => doc.id === id);
-        if (user) {
-          setUserEmail(user.data().email);
-          setUserToken(user.data().idToken);
+        const authenticatedUser = auth.currentUser;
+        if (authenticatedUser) {
+          setUserEmail(authenticatedUser.email);
         }
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -57,7 +53,7 @@ const UserList = () => {
     };
 
     fetchData();
-  });
+  }, [userId]); 
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -67,11 +63,8 @@ const UserList = () => {
     const username = user.username ? user.username.toLowerCase() : "";
     const email = user.email ? user.email.toLowerCase() : "";
     const searchTermLower = searchTerm.toLowerCase();
-    return (
-      username.includes(searchTermLower) || email.includes(searchTermLower)
-    );
+    return username.includes(searchTermLower) || email.includes(searchTermLower);
   });
-
   return (
     <div style={{ backgroundColor: "#fafafa" }}>
       <StackNavigator />
@@ -156,7 +149,7 @@ const UserList = () => {
                   <button
                     className="btn btn-primary"
                     onClick={() =>
-                      navigation(`/chat/${userToken}/${id}/${user.id}`, {
+                      navigation(`/chat/${user.id}`, {
                         state: { receiverEmail: user.email, email: userEmail },
                       })
                     }
@@ -174,8 +167,8 @@ const UserList = () => {
                   <button
                     className="btn btn-primary"
                     onClick={() =>
-                      navigation(`/profile/${userToken}/${id}/${user.id}`, {
-                        state: { receiverEmail: user.email, email: userEmail },
+                      navigation(`/profile/${user.id}`, {
+                        state: { receiverEmail: user.email },
                       })
                     }
                     style={{

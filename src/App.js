@@ -27,7 +27,7 @@ const PrivateRoute = () => {
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>; // Display a loading indicator until authentication state is checked
+    return <div>Loading...</div>;
   }
 
   return user ? <Outlet /> : <Navigate to="/signin" />;
@@ -40,10 +40,10 @@ function App() {
       <Route path="/signup" element={<SignUp />} /> 
       <Route path="/signin" element={<SignIn />} />
       <Route element={<PrivateRoute />}>
-        <Route path="/userlist/:idToken/:userId" element={<UserList />} />
-        <Route path="/chat/:idToken/:userId/:recipientId" element={<Chat />} />
-        <Route path="/profile/:idToken/:userId/:profileId" element={<Profile />} />
-        <Route path="/post/:idToken/:userId/:profileId/:photoId" element={<Post />} />
+        <Route path="/userlist" element={<UserList />} />
+        <Route path="/chat/:recipientId" element={<Chat />} />
+        <Route path="/profile/:profileId" element={<Profile />} />
+        <Route path="/post/:profileId/:photoId" element={<Post />} />
       </Route>
     </Routes>
   );

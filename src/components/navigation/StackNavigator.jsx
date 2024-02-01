@@ -1,15 +1,44 @@
 import { Container, Nav, Navbar, Offcanvas } from "react-bootstrap";
-import { Link, useParams } from "react-router-dom";
-import { useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  where,
+  getFirestore,
+} from "firebase/firestore";
+import { db, auth } from "../../firebase";
+import { useState, useEffect } from "react";
 
 function OffcanvasExample() {
+  const [userId, setUserId] = useState("");
   const expand = false;
-  const params = useParams();
-  //const userId = params.userId;
-  const { userId, idToken } = params;
   useEffect(() => {
-    console.log(userId);
-  });
+    const fetchUserId = async () => {
+      try {
+        const currentUserEmail = auth.currentUser.email;
+        const usersRef = collection(db, "users");
+        const querySnapshot = await getDocs(
+          query(usersRef, where("email", "==", currentUserEmail))
+        );
+
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          setUserId(userDoc.id);
+        } else {
+          console.error("User document not found for email: " + currentUserEmail);
+        }
+      } catch (error) {
+        console.error("Error fetching userId:", error);
+      }
+    };
+
+    if (auth.currentUser) {
+      fetchUserId();
+    }
+  }, []);
+  
   return (
     <Navbar expand={expand} className="bg-body-tertiary mb-3">
       <Container fluid>
@@ -29,11 +58,12 @@ function OffcanvasExample() {
             <Nav className="justify-content-end flex-grow-1 pe-3">
               <Nav.Link
                 as={Link}
-                to={`/profile/${idToken}/${userId}/${userId}`}
+                to= {`/profile/${userId}`}
+                state={{receiverEmail : auth.currentUser.email}}
               >
                 Profile
               </Nav.Link>
-              <Nav.Link as={Link} to={`/userlist/${idToken}/${userId}`}>
+              <Nav.Link as={Link} to={`/userlist/`}>
                 Search people
               </Nav.Link>
               <Nav.Link as={Link} to="/signin">

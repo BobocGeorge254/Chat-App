@@ -1,4 +1,4 @@
-import { signInWithEmailAndPassword, getIdToken } from "firebase/auth";
+import { signInWithEmailAndPassword} from "firebase/auth";
 import React, { useState } from "react";
 import { auth } from "../../firebase";
 import { toast } from "react-toastify";
@@ -39,12 +39,8 @@ const SignIn = ({ getStatus, getEmail }) => {
       });
 
       const user = userCredentials.user;
-      const idToken = await getIdToken(user, true);
       const userDocRef = doc(db, "users", userId);
-      await updateDoc(userDocRef, {
-        idToken: idToken,
-      });
-      navigation(`/userlist/${idToken}/${userId}`, {
+      navigation(`/userlist`, {
         state: { userEmail: email },
       });
       toast.success("Successful! Happy chatting! :)");
